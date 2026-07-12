@@ -53,39 +53,54 @@ class EvaluationReport:
 def evaluate(events: list[Event], alerts: list[Alert], rules: list[Rule]) -> EvaluationReport:
     alert_events = {event_id for alert in alerts for event_id in alert.event_ids}
     labeled = [event for event in events if event.label in {"malicious", "benign"}]
-    true_positive = sum(event.label == "malicious" and event.id in alert_events for event in labeled)
-    false_negative = sum(event.label == "malicious" and event.id not in alert_events for event in labeled)
+    true_positive = sum(
+        event.label == "malicious" and event.id in alert_events for event in labeled
+    )
+    false_negative = sum(
+        event.label == "malicious" and event.id not in alert_events for event in labeled
+    )
     false_positive = sum(event.label == "benign" and event.id in alert_events for event in labeled)
-    true_negative = sum(event.label == "benign" and event.id not in alert_events for event in labeled)
+    true_negative = sum(
+        event.label == "benign" and event.id not in alert_events for event in labeled
+    )
     precision = _ratio(true_positive, true_positive + false_positive)
     recall = _ratio(true_positive, true_positive + false_negative)
     f1 = _ratio(2 * precision * recall, precision + recall)
-    metrics = Metrics(true_positive, false_positive, false_negative, true_negative, precision, recall, f1)
+    metrics = Metrics(
+        true_positive, false_positive, false_negative, true_negative, precision, recall, f1
+    )
 
     alerts_by_rule: dict[str, set[str]] = {}
     for alert in alerts:
         alerts_by_rule.setdefault(alert.rule_id, set()).update(alert.event_ids)
     scores: list[RuleScore] = []
     for rule in rules:
-        expected = {
-            event.id
-            for event in events
-            if rule.id in _expected_rules(event)
-        }
-        observed = alerts_by_rule.get(rule.id, set())
+        expected = {event.id for event in events if rule.id in _expected_rules(event)}
+        observed_events = alerts_by_rule.get(rule.id, set())
         scores.append(
             RuleScore(
                 rule_id=rule.id,
                 expected_events=len(expected),
-                detected_events=len(expected & observed),
-                unexpected_events=len(observed - expected) if expected else 0,
-                missed_event_ids=tuple(sorted(expected - observed)),
+                detected_events=len(expected & observed_events),
+                unexpected_events=len(observed_events - expected) if expected else 0,
+                missed_event_ids=tuple(sorted(expected - observed_events)),
             )
         )
     loaded = tuple(sorted({technique for rule in rules for technique in rule.attack_techniques}))
     observed_rule_ids = {alert.rule_id for alert in alerts}
-    observed = tuple(sorted({technique for rule in rules if rule.id in observed_rule_ids for technique in rule.attack_techniques}))
-    return EvaluationReport(metrics, scores, loaded, observed, len(events) - len(labeled))
+    observed_techniques = tuple(
+        sorted(
+            {
+                technique
+                for rule in rules
+                if rule.id in observed_rule_ids
+                for technique in rule.attack_techniques
+            }
+        )
+    )
+    return EvaluationReport(
+        metrics, scores, loaded, observed_techniques, len(events) - len(labeled)
+    )
 
 
 def _expected_rules(event: Event) -> set[str]:
@@ -99,4 +114,3 @@ def _expected_rules(event: Event) -> set[str]:
 
 def _ratio(numerator: float, denominator: float) -> float:
     return round(numerator / denominator, 6) if denominator else 0.0
-

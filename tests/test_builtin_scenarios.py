@@ -5,7 +5,6 @@ from pathlib import Path
 
 from detection_replay_lab.scenarios import load_scenario, run_scenario
 
-
 ROOT = Path(__file__).parents[1]
 
 
@@ -24,4 +23,3 @@ class BuiltinScenarioTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

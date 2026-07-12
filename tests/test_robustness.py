@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 import string
 import unittest
+from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 
 from detection_replay_lab.engine import DetectionEngine
@@ -31,8 +32,12 @@ class RobustnessTests(unittest.TestCase):
         for index in range(2_000):
             raw = {
                 "timestamp": index,
-                "field": "".join(randomizer.choice(alphabet) for _ in range(randomizer.randrange(0, 128))),
-                "count": randomizer.choice([None, randomizer.randrange(-100, 100), "not-a-number", [1, 2]]),
+                "field": "".join(
+                    randomizer.choice(alphabet) for _ in range(randomizer.randrange(0, 128))
+                ),
+                "count": randomizer.choice(
+                    [None, randomizer.randrange(-100, 100), "not-a-number", [1, 2]]
+                ),
             }
             event = Normalizer().normalize(raw, index=index, source="fuzz")
             alerts = engine.evaluate(event)
@@ -42,11 +47,11 @@ class RobustnessTests(unittest.TestCase):
         randomizer = random.Random(0xC0DE)
         alphabet = string.ascii_letters + string.digits + "()&|! $%^"
         for _ in range(1_000):
-            condition = "".join(randomizer.choice(alphabet) for _ in range(randomizer.randrange(0, 80)))
-            try:
+            condition = "".join(
+                randomizer.choice(alphabet) for _ in range(randomizer.randrange(0, 80))
+            )
+            with suppress(ValidationError):
                 evaluate_condition(condition, {"selection": True})
-            except ValidationError:
-                pass
 
     def test_replay_is_identical_for_every_input_permutation(self) -> None:
         rule = parse_rule(
@@ -57,7 +62,10 @@ class RobustnessTests(unittest.TestCase):
             }
         )
         base = datetime(2026, 1, 1, tzinfo=UTC)
-        events = [Event(f"e{index}", base + timedelta(seconds=index), {"event.action": "hit"}) for index in range(10)]
+        events = [
+            Event(f"e{index}", base + timedelta(seconds=index), {"event.action": "hit"})
+            for index in range(10)
+        ]
         expected = [alert.id for alert in ReplayRunner([rule]).run(events).alerts]
         random.Random(42).shuffle(events)
         actual = [alert.id for alert in ReplayRunner([rule]).run(events).alerts]
@@ -66,4 +74,3 @@ class RobustnessTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

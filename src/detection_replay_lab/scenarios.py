@@ -63,10 +63,14 @@ def load_scenario(path: str | Path) -> Scenario:
     if not isinstance(gate_data, dict):
         raise ValidationError("scenario gates must be an object")
     gates = Gates(
-        minimum_precision=_probability(gate_data.get("minimum_precision", 0.0), "minimum_precision"),
+        minimum_precision=_probability(
+            gate_data.get("minimum_precision", 0.0), "minimum_precision"
+        ),
         minimum_recall=_probability(gate_data.get("minimum_recall", 0.0), "minimum_recall"),
         minimum_f1=_probability(gate_data.get("minimum_f1", 0.0), "minimum_f1"),
-        expected_alerts=int(gate_data["expected_alerts"]) if "expected_alerts" in gate_data else None,
+        expected_alerts=int(gate_data["expected_alerts"])
+        if "expected_alerts" in gate_data
+        else None,
     )
     return Scenario(
         id=str(data.get("id") or root.name),
@@ -74,7 +78,9 @@ def load_scenario(path: str | Path) -> Scenario:
         root=root,
         event_paths=tuple(_resolve_paths(root, data.get("events", ["events.ndjson"]))),
         rule_paths=tuple(_resolve_paths(root, data.get("rules", ["rules"]), allow_external=True)),
-        techniques=tuple(str(item).casefold() for item in _list(data.get("techniques", []), "techniques")),
+        techniques=tuple(
+            str(item).casefold() for item in _list(data.get("techniques", []), "techniques")
+        ),
         gates=gates,
         description=str(data.get("description", "")),
     )
@@ -88,12 +94,17 @@ def run_scenario(scenario: Scenario, *, include_traces: bool = False) -> Scenari
     failures: list[str] = []
     metrics = report.metrics
     if metrics.precision < scenario.gates.minimum_precision:
-        failures.append(f"precision {metrics.precision:.3f} below {scenario.gates.minimum_precision:.3f}")
+        failures.append(
+            f"precision {metrics.precision:.3f} below {scenario.gates.minimum_precision:.3f}"
+        )
     if metrics.recall < scenario.gates.minimum_recall:
         failures.append(f"recall {metrics.recall:.3f} below {scenario.gates.minimum_recall:.3f}")
     if metrics.f1 < scenario.gates.minimum_f1:
         failures.append(f"f1 {metrics.f1:.3f} below {scenario.gates.minimum_f1:.3f}")
-    if scenario.gates.expected_alerts is not None and len(replay.alerts) != scenario.gates.expected_alerts:
+    if (
+        scenario.gates.expected_alerts is not None
+        and len(replay.alerts) != scenario.gates.expected_alerts
+    ):
         failures.append(f"alerts {len(replay.alerts)} != expected {scenario.gates.expected_alerts}")
     missing_techniques = set(scenario.techniques) - set(report.techniques_loaded)
     if missing_techniques:
@@ -125,4 +136,3 @@ def _probability(value: Any, name: str) -> float:
     if not 0.0 <= parsed <= 1.0:
         raise ValidationError(f"{name} must be between 0 and 1")
     return parsed
-

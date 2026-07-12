@@ -1,2 +1,1 @@
 """Detection Replay Lab tests."""
-

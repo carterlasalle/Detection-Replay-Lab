@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 
-from .models import Correlation, LEVEL_ORDER, LogSource, Rule, ValidationError
+from .models import LEVEL_ORDER, Correlation, LogSource, Rule, ValidationError
 from .predicates import evaluate_condition
 
 
@@ -73,7 +73,9 @@ def parse_rule(data: Any, *, source_path: str | None = None) -> Rule:
             service=_optional_string(logsource_data.get("service")),
         ),
         tags=tuple(str(item).casefold() for item in _list(data.get("tags", []), "tags")),
-        falsepositives=tuple(str(item) for item in _list(data.get("falsepositives", []), "falsepositives")),
+        falsepositives=tuple(
+            str(item) for item in _list(data.get("falsepositives", []), "falsepositives")
+        ),
         references=tuple(str(item) for item in _list(data.get("references", []), "references")),
         correlation=correlation,
         source_path=source_path,
@@ -102,7 +104,7 @@ def _parse_correlation(value: Any, selections: dict[str, Any]) -> Correlation | 
 
 
 def _parse_duration(value: Any) -> float:
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         seconds = float(value)
     elif isinstance(value, str):
         match = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*([smhd])\s*", value.casefold())
@@ -124,7 +126,9 @@ def _expand(paths: list[str | Path]) -> list[Path]:
         if path.is_file():
             discovered.add(path)
         elif path.is_dir():
-            discovered.update(item for item in path.rglob("*") if item.suffix.casefold() in {".yml", ".yaml"})
+            discovered.update(
+                item for item in path.rglob("*") if item.suffix.casefold() in {".yml", ".yaml"}
+            )
         else:
             raise ValidationError(f"rule path does not exist: {path}")
     return sorted(discovered, key=lambda item: item.as_posix())
@@ -138,4 +142,3 @@ def _list(value: Any, name: str) -> list[Any]:
 
 def _optional_string(value: Any) -> str | None:
     return str(value).casefold() if value is not None else None
-

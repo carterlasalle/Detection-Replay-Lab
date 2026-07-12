@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python }} · ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.11", "3.12", "3.13"]
+        include:
+          - os: macos-latest
+            python: "3.13"
+          - os: windows-latest
+            python: "3.13"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - name: Install locked environment
+        run: uv sync --locked --extra dev
+      - name: Run unit and integration tests
+        run: uv run python -m unittest discover -v
+      - name: Validate bundled content
+        run: uv run drl validate --rules rules --scenarios scenarios/credential_access scenarios/defense_evasion
+      - name: Enforce bundled scenario gates
+        run: uv run drl test scenarios/credential_access scenarios/defense_evasion
+
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          enable-cache: true
+      - run: uv sync --locked --extra dev
+      - name: Format and lint
+        run: |
+          uv run ruff format --check .
+          uv run ruff check .
+      - name: Strict type check
+        run: uv run mypy src
+      - name: Coverage gate
+        run: uv run pytest --cov=detection_replay_lab --cov-report=term-missing --cov-fail-under=85
+      - name: Generate evidence reports
+        run: |
+          mkdir -p reports
+          uv run drl test scenarios/credential_access scenarios/defense_evasion --format junit --output reports/drl-junit.xml
+          uv run drl coverage --events scenarios/credential_access/events.ndjson --rules rules --output reports/coverage.md
+          uv run drl replay --events scenarios/defense_evasion/events.ndjson --rules rules --format sarif --output reports/drl.sarif
+      - name: Build source and wheel
+        run: uv build
+      - name: Smoke-test built wheel
+        shell: bash
+        run: |
+          uv venv wheel-test
+          uv pip install --python wheel-test dist/*.whl
+          wheel-test/bin/python -m detection_replay_lab --version
+      - name: Run replay benchmark
+        run: uv run python benchmarks/benchmark_replay.py
+      - name: Upload test evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: detection-evidence
+          path: reports/*
+          if-no-files-found: error
+
+  action-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute local composite action
+        uses: ./
+        with:
+          scenarios: scenarios/credential_access scenarios/defense_evasion
+          report: drl-junit.xml
+      - run: test -s drl-junit.xml
+

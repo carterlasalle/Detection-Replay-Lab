@@ -7,7 +7,6 @@ from typing import Any
 
 from .models import Event, ValidationError, parse_timestamp, stable_id
 
-
 DEFAULT_ALIASES: dict[str, tuple[str, ...]] = {
     "@timestamp": ("timestamp", "time", "eventTime", "TimeCreated", "UtcTime"),
     "event.action": ("action", "eventName", "EventName"),
@@ -49,7 +48,11 @@ class Normalizer:
         if timestamp_value is None:
             raise ValidationError("event is missing a timestamp")
         timestamp = parse_timestamp(timestamp_value)
-        event_id = str(raw.get("id") or raw.get("event_id") or stable_id(source, str(index), timestamp.isoformat()))
+        event_id = str(
+            raw.get("id")
+            or raw.get("event_id")
+            or stable_id(source, str(index), timestamp.isoformat())
+        )
         label = raw.get("label") or _deep_get(raw, "drl.label")
         if label is not None and label not in {"malicious", "benign"}:
             raise ValidationError("event label must be malicious or benign")
@@ -73,4 +76,3 @@ def _deep_get(value: dict[str, Any], path: str) -> Any:
             return None
         current = current[part]
     return current
-

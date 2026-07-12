@@ -8,15 +8,20 @@ from collections import Counter
 from typing import Any
 
 from .evaluate import EvaluationReport
-from .models import Alert, ReplayResult, Rule
+from .models import ReplayResult, Rule
 from .scenarios import ScenarioRun
 
 
-def render_replay(result: ReplayResult, format_name: str, rules: list[Rule], *, traces: bool = False) -> str:
+def render_replay(
+    result: ReplayResult, format_name: str, rules: list[Rule], *, traces: bool = False
+) -> str:
     if format_name == "json":
         return json.dumps(result.to_dict(include_traces=traces), indent=2, sort_keys=True)
     if format_name == "jsonl":
-        return "\n".join(json.dumps(alert.to_dict(include_trace=traces), sort_keys=True) for alert in result.alerts)
+        return "\n".join(
+            json.dumps(alert.to_dict(include_trace=traces), sort_keys=True)
+            for alert in result.alerts
+        )
     if format_name == "sarif":
         return json.dumps(replay_sarif(result, rules), indent=2, sort_keys=True)
     return replay_table(result)
@@ -40,7 +45,10 @@ def replay_table(result: ReplayResult) -> str:
         )
     counts = Counter(alert.level for alert in result.alerts)
     summary = ", ".join(f"{count} {level}" for level, count in sorted(counts.items()))
-    return _table(["TIME", "LEVEL", "RULE", "EVENTS", "GROUP", "TITLE"], rows) + f"\n\nEmitted {len(result.alerts)} alert(s): {summary}"
+    return (
+        _table(["TIME", "LEVEL", "RULE", "EVENTS", "GROUP", "TITLE"], rows)
+        + f"\n\nEmitted {len(result.alerts)} alert(s): {summary}"
+    )
 
 
 def render_scenario_runs(runs: list[ScenarioRun], format_name: str) -> str:
@@ -63,7 +71,9 @@ def render_scenario_runs(runs: list[ScenarioRun], format_name: str) -> str:
                 "; ".join(run.failures) or "—",
             ]
         )
-    return _table(["STATUS", "SCENARIO", "EVENTS", "ALERTS", "PRECISION", "RECALL", "F1", "DETAIL"], rows)
+    return _table(
+        ["STATUS", "SCENARIO", "EVENTS", "ALERTS", "PRECISION", "RECALL", "F1", "DETAIL"], rows
+    )
 
 
 def render_coverage(report: EvaluationReport, rules: list[Rule], *, markdown: bool = False) -> str:
@@ -90,10 +100,22 @@ def render_coverage(report: EvaluationReport, rules: list[Rule], *, markdown: bo
     ]
     for technique in report.techniques_loaded:
         count = sum(technique in rule.attack_techniques for rule in rules)
-        lines.append(f"| `{technique}` | {count} | {'yes' if technique in report.techniques_observed else 'no'} |")
-    lines.extend(["", "## Rule results", "", "| Rule | Expected | Detected | Unexpected | Missed IDs |", "| --- | ---: | ---: | ---: | --- |"]) 
+        lines.append(
+            f"| `{technique}` | {count} | {'yes' if technique in report.techniques_observed else 'no'} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Rule results",
+            "",
+            "| Rule | Expected | Detected | Unexpected | Missed IDs |",
+            "| --- | ---: | ---: | ---: | --- |",
+        ]
+    )
     for score in report.rule_scores:
-        lines.append(f"| `{score.rule_id}` | {score.expected_events} | {score.detected_events} | {score.unexpected_events} | {', '.join(score.missed_event_ids) or '—'} |")
+        lines.append(
+            f"| `{score.rule_id}` | {score.expected_events} | {score.detected_events} | {score.unexpected_events} | {', '.join(score.missed_event_ids) or '—'} |"
+        )
     return "\n".join(lines) + "\n"
 
 
@@ -110,7 +132,10 @@ def replay_sarif(result: ReplayResult, rules: list[Rule]) -> dict[str, Any]:
                 "shortDescription": {"text": rule.title},
                 "fullDescription": {"text": rule.description or rule.title},
                 "defaultConfiguration": {"level": _sarif_level(rule.level)},
-                "properties": {"tags": list(rule.tags), "security-severity": str(_security_score(rule.level))},
+                "properties": {
+                    "tags": list(rule.tags),
+                    "security-severity": str(_security_score(rule.level)),
+                },
             }
         )
     results = []
@@ -119,7 +144,9 @@ def replay_sarif(result: ReplayResult, rules: list[Rule]) -> dict[str, Any]:
             {
                 "ruleId": alert.rule_id,
                 "level": _sarif_level(alert.level),
-                "message": {"text": f"{alert.rule_title}; matched event(s): {', '.join(alert.event_ids)}"},
+                "message": {
+                    "text": f"{alert.rule_title}; matched event(s): {', '.join(alert.event_ids)}"
+                },
                 "logicalLocations": [{"name": alert.rule_id, "kind": "detection rule"}],
                 "partialFingerprints": {"detectionReplayAlert/v1": alert.id},
                 "properties": {
@@ -156,9 +183,17 @@ def scenario_junit(runs: list[ScenarioRun]) -> str:
         failures=str(sum(not run.passed for run in runs)),
     )
     for run in runs:
-        case = ET.SubElement(suite, "testcase", classname="drl.scenario", name=run.scenario.id, time=f"{run.replay.stats.duration_seconds:.6f}")
+        case = ET.SubElement(
+            suite,
+            "testcase",
+            classname="drl.scenario",
+            name=run.scenario.id,
+            time=f"{run.replay.stats.duration_seconds:.6f}",
+        )
         if not run.passed:
-            failure = ET.SubElement(case, "failure", message="; ".join(run.failures) or "replay error")
+            failure = ET.SubElement(
+                case, "failure", message="; ".join(run.failures) or "replay error"
+            )
             failure.text = "\n".join([*run.failures, *run.replay.errors])
         output = ET.SubElement(case, "system-out")
         output.text = json.dumps(_scenario_dict(run), sort_keys=True)
@@ -183,9 +218,15 @@ def _table(headers: list[str], rows: list[list[str]]) -> str:
     for row in rows:
         for index, value in enumerate(row):
             widths[index] = min(72, max(widths[index], len(value)))
+
     def line(values: list[str]) -> str:
-        return "  ".join(value[: widths[index]].ljust(widths[index]) for index, value in enumerate(values)).rstrip()
-    return "\n".join([line(headers), line(["─" * width for width in widths]), *(line(row) for row in rows)])
+        return "  ".join(
+            value[: widths[index]].ljust(widths[index]) for index, value in enumerate(values)
+        ).rstrip()
+
+    return "\n".join(
+        [line(headers), line(["─" * width for width in widths]), *(line(row) for row in rows)]
+    )
 
 
 def _sarif_level(level: str) -> str:
@@ -194,4 +235,3 @@ def _sarif_level(level: str) -> str:
 
 def _security_score(level: str) -> float:
     return {"informational": 1.0, "low": 3.0, "medium": 5.5, "high": 8.0, "critical": 9.5}[level]
-

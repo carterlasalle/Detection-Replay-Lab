@@ -6,13 +6,15 @@ import argparse
 import json
 import sys
 from collections.abc import Sequence
+from dataclasses import asdict
 from pathlib import Path
+from typing import Any
 
 from . import __version__
 from .engine import DetectionEngine
 from .evaluate import evaluate
 from .events import event_from_stdin, load_event, load_events
-from .models import LEVEL_ORDER, ValidationError
+from .models import LEVEL_ORDER, EvaluationTrace, Rule, ValidationError
 from .replay import ReplayRunner
 from .report import render_coverage, render_replay, render_scenario_runs
 from .rules import load_rules
@@ -20,8 +22,12 @@ from .scenarios import load_scenario, run_scenario
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="drl", description="Replay telemetry and prove detection behavior")
-    parser.add_argument("--version", action="version", version=f"Detection Replay Lab {__version__}")
+    parser = argparse.ArgumentParser(
+        prog="drl", description="Replay telemetry and prove detection behavior"
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"Detection Replay Lab {__version__}"
+    )
     commands = parser.add_subparsers(dest="command", required=True)
 
     replay = commands.add_parser("replay", help="replay events against rules")
@@ -97,8 +103,14 @@ def _replay(args: argparse.Namespace) -> int:
         if not args.events:
             raise ValidationError("--events is required unless --stdin is used")
         events = load_events(args.events)
-    rules = [rule for rule in load_rules(args.rules) if LEVEL_ORDER[rule.level] >= LEVEL_ORDER[args.minimum_level]]
-    result = ReplayRunner(rules, include_traces=args.trace, speed=args.speed, max_sleep=args.max_sleep).run(events)
+    rules = [
+        rule
+        for rule in load_rules(args.rules)
+        if LEVEL_ORDER[rule.level] >= LEVEL_ORDER[args.minimum_level]
+    ]
+    result = ReplayRunner(
+        rules, include_traces=args.trace, speed=args.speed, max_sleep=args.max_sleep
+    ).run(events)
     output = render_replay(result, args.format, rules, traces=args.trace)
     _write(output, args.output)
     if result.errors:
@@ -170,14 +182,12 @@ def _write(content: str, path: str | None) -> None:
         print(content)
 
 
-def _trace_dict(trace: object) -> object:
-    from dataclasses import asdict
-    return asdict(trace)  # type: ignore[arg-type]
+def _trace_dict(trace: EvaluationTrace) -> dict[str, Any]:
+    return asdict(trace)
 
 
-def _rule_dict(rule: object) -> dict[str, object]:
-    from dataclasses import asdict
-    data = asdict(rule)  # type: ignore[arg-type]
+def _rule_dict(rule: Rule) -> dict[str, Any]:
+    data = asdict(rule)
     data.pop("detection", None)
     return data
 
@@ -224,4 +234,3 @@ detection:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

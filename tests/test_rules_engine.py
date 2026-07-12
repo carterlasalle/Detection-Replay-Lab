@@ -9,7 +9,6 @@ from detection_replay_lab.engine import DetectionEngine
 from detection_replay_lab.models import Event, ValidationError
 from detection_replay_lab.rules import load_rules, parse_rule
 
-
 RULE = {
     "id": "drl-test-powershell",
     "title": "Encoded PowerShell",
@@ -77,8 +76,12 @@ class EngineTests(unittest.TestCase):
         self.assertIn("attack.t1059.001", first.tags)
 
     def test_filter_and_logsource_prevent_false_alert(self) -> None:
-        admin = Event(self.event.id, self.event.timestamp, {**self.event.fields, "user.name": "lab-admin"})
-        linux = Event(self.event.id, self.event.timestamp, {**self.event.fields, "drl.product": "linux"})
+        admin = Event(
+            self.event.id, self.event.timestamp, {**self.event.fields, "user.name": "lab-admin"}
+        )
+        linux = Event(
+            self.event.id, self.event.timestamp, {**self.event.fields, "drl.product": "linux"}
+        )
         self.assertFalse(DetectionEngine([self.rule]).evaluate(admin))
         self.assertFalse(DetectionEngine([self.rule]).evaluate(linux))
 

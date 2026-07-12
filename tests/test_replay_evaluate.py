@@ -25,8 +25,16 @@ class ReplayTests(unittest.TestCase):
                 "id": "login-failures",
                 "title": "Repeated login failures",
                 "level": "high",
-                "detection": {"selection": {"event.action": "login_failed"}, "condition": "selection"},
-                "correlation": {"type": "threshold", "group_by": ["user.name"], "timespan": "2m", "count": 3},
+                "detection": {
+                    "selection": {"event.action": "login_failed"},
+                    "condition": "selection",
+                },
+                "correlation": {
+                    "type": "threshold",
+                    "group_by": ["user.name"],
+                    "timespan": "2m",
+                    "count": 3,
+                },
             }
         )
         events = [make_event(index, "login_failed") for index in range(1, 5)]
@@ -46,7 +54,12 @@ class ReplayTests(unittest.TestCase):
                     "execute": {"event.action": "process_started"},
                     "condition": "1 of *",
                 },
-                "correlation": {"type": "sequence", "group_by": ["user.name"], "timespan": "1m", "ordered": ["download", "execute"]},
+                "correlation": {
+                    "type": "sequence",
+                    "group_by": ["user.name"],
+                    "timespan": "1m",
+                    "ordered": ["download", "execute"],
+                },
             }
         )
         events = [make_event(1, "file_downloaded"), make_event(2, "process_started")]

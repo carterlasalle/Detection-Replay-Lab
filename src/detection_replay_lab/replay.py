@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import time
-from collections import defaultdict, deque
+from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
 
 from .engine import DetectionEngine
 from .models import Alert, Event, ReplayResult, Rule, stable_id
@@ -21,8 +20,12 @@ class ReplayRunner:
     speed: float = 0.0
     max_sleep: float = 5.0
     sleep: Callable[[float], None] = time.sleep
-    _thresholds: dict[tuple[str, tuple[tuple[str, str], ...]], deque[Event]] = field(default_factory=dict, init=False)
-    _sequences: dict[tuple[str, tuple[tuple[str, str], ...]], list[Event]] = field(default_factory=dict, init=False)
+    _thresholds: dict[tuple[str, tuple[tuple[str, str], ...]], deque[Event]] = field(
+        default_factory=dict, init=False
+    )
+    _sequences: dict[tuple[str, tuple[tuple[str, str], ...]], list[Event]] = field(
+        default_factory=dict, init=False
+    )
 
     def run(self, events: list[Event]) -> ReplayResult:
         if self.speed < 0:
@@ -82,13 +85,19 @@ class ReplayRunner:
         group = _group(rule, event)
         key = (rule.id, group)
         progress = self._sequences.setdefault(key, [])
-        if progress and (event.timestamp - progress[0].timestamp).total_seconds() > correlation.timespan_seconds:
+        if (
+            progress
+            and (event.timestamp - progress[0].timestamp).total_seconds()
+            > correlation.timespan_seconds
+        ):
             progress.clear()
         expected_index = len(progress)
         expected_name = correlation.ordered[expected_index]
         if match_selection(expected_name, rule.detection[expected_name], event).matched:
             progress.append(event)
-        elif match_selection(correlation.ordered[0], rule.detection[correlation.ordered[0]], event).matched:
+        elif match_selection(
+            correlation.ordered[0], rule.detection[correlation.ordered[0]], event
+        ).matched:
             progress[:] = [event]
         if len(progress) != len(correlation.ordered):
             return None
@@ -103,7 +112,9 @@ def _group(rule: Rule, event: Event) -> tuple[tuple[str, str], ...]:
     return tuple((field, str(event.get(field, "<missing>"))) for field in correlation.group_by)
 
 
-def _correlation_alert(rule: Rule, events: tuple[Event, ...], group: tuple[tuple[str, str], ...]) -> Alert:
+def _correlation_alert(
+    rule: Rule, events: tuple[Event, ...], group: tuple[tuple[str, str], ...]
+) -> Alert:
     joined = ",".join(event.id for event in events)
     group_text = ",".join(f"{key}={value}" for key, value in group)
     return Alert(
@@ -116,4 +127,3 @@ def _correlation_alert(rule: Rule, events: tuple[Event, ...], group: tuple[tuple
         group=group,
         tags=rule.tags,
     )
-

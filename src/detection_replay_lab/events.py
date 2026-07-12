@@ -37,7 +37,13 @@ def load_event(path: str | Path, *, normalizer: Normalizer | None = None) -> Eve
 
 def _read_records(stream: TextIO, path: Path) -> list[dict[str, Any]]:
     suffixes = [suffix.casefold() for suffix in path.suffixes]
-    effective = suffixes[-2] if suffixes and suffixes[-1] == ".gz" and len(suffixes) > 1 else suffixes[-1] if suffixes else ""
+    effective = (
+        suffixes[-2]
+        if suffixes and suffixes[-1] == ".gz" and len(suffixes) > 1
+        else suffixes[-1]
+        if suffixes
+        else ""
+    )
     try:
         if effective == ".csv":
             return [dict(row) for row in csv.DictReader(stream)]
@@ -49,7 +55,9 @@ def _read_records(stream: TextIO, path: Path) -> list[dict[str, Any]]:
                 else:
                     payload = [payload]
             if not isinstance(payload, list) or any(not isinstance(item, dict) for item in payload):
-                raise ValidationError(f"JSON event file {path} must contain an object or array of objects")
+                raise ValidationError(
+                    f"JSON event file {path} must contain an object or array of objects"
+                )
             return payload
         records: list[dict[str, Any]] = []
         for line_number, line in enumerate(stream, start=1):
@@ -81,7 +89,11 @@ def _expand(paths: list[str | Path]) -> list[Path]:
         if path.is_file():
             discovered.add(path)
         elif path.is_dir():
-            discovered.update(item for item in path.rglob("*") if item.is_file() and item.suffix.casefold() in supported)
+            discovered.update(
+                item
+                for item in path.rglob("*")
+                if item.is_file() and item.suffix.casefold() in supported
+            )
         else:
             raise ValidationError(f"event path does not exist: {path}")
     return sorted(discovered, key=lambda item: item.as_posix())
@@ -92,5 +104,7 @@ def event_from_stdin(content: str, *, filename: str = "<stdin>") -> list[Event]:
     synthetic_path = Path(filename if suffix else f"{filename}.ndjson")
     records = _read_records(io.StringIO(content), synthetic_path)
     normalizer = Normalizer()
-    return [normalizer.normalize(record, index=index, source=filename) for index, record in enumerate(records)]
-
+    return [
+        normalizer.normalize(record, index=index, source=filename)
+        for index, record in enumerate(records)
+    ]

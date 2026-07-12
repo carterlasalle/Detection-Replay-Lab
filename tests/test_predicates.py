@@ -34,7 +34,9 @@ class PredicateTests(unittest.TestCase):
         matches = {"selection_one": True, "selection_two": False, "filter": False}
         self.assertTrue(evaluate_condition("1 of selection_* and not filter", matches))
         self.assertFalse(evaluate_condition("all of selection_*", matches))
-        self.assertTrue(evaluate_condition("(selection_one or selection_two) and not filter", matches))
+        self.assertTrue(
+            evaluate_condition("(selection_one or selection_two) and not filter", matches)
+        )
 
     def test_rejects_unknown_modifier_and_condition_reference(self) -> None:
         with self.assertRaisesRegex(ValidationError, "modifier"):
@@ -45,4 +47,3 @@ class PredicateTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

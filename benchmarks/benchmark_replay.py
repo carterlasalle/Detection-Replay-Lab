@@ -9,9 +9,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
-from detection_replay_lab.models import Event  # noqa: E402
-from detection_replay_lab.replay import ReplayRunner  # noqa: E402
-from detection_replay_lab.rules import load_rules  # noqa: E402
+from detection_replay_lab.models import Event
+from detection_replay_lab.replay import ReplayRunner
+from detection_replay_lab.rules import load_rules
 
 
 def main() -> None:
@@ -38,7 +38,9 @@ def main() -> None:
     result = ReplayRunner(rules).run(events)
     elapsed = time.perf_counter() - started
     evaluations = len(events) * len(rules)
-    print(f"Evaluated {evaluations:,} rule-event pairs in {elapsed:.3f}s ({evaluations / elapsed:,.0f}/s); alerts={len(result.alerts)}")
+    print(
+        f"Evaluated {evaluations:,} rule-event pairs in {elapsed:.3f}s ({evaluations / elapsed:,.0f}/s); alerts={len(result.alerts)}"
+    )
 
 
 if __name__ == "__main__":

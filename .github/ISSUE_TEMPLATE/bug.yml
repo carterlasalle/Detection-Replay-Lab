@@ -1,0 +1,37 @@
+name: Bug report
+description: Report a reproducible engine or reporting defect using synthetic telemetry
+title: "bug: "
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: Do not attach production telemetry, credentials, internal rules, or customer identifiers.
+  - type: input
+    id: version
+    attributes:
+      label: DRL and Python versions
+      placeholder: Detection Replay Lab 0.1.0, Python 3.13.5
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options: [normalization, predicates, conditions, threshold, sequence, metrics, CLI, report]
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Synthetic reproduction
+      description: Include minimal inert rule, event, command, expected result, and actual result.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety
+      options:
+        - label: This report contains only synthetic or public documentation-safe data.
+          required: true
+

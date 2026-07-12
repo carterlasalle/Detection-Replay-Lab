@@ -8,7 +8,6 @@ from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-
 Level = Literal["informational", "low", "medium", "high", "critical"]
 LEVEL_ORDER: dict[str, int] = {
     "informational": 0,
@@ -154,7 +153,7 @@ class ReplayResult:
 def parse_timestamp(value: Any) -> datetime:
     if isinstance(value, datetime):
         parsed = value
-    elif isinstance(value, (int, float)) and not isinstance(value, bool):
+    elif isinstance(value, int | float) and not isinstance(value, bool):
         parsed = datetime.fromtimestamp(float(value), tz=UTC)
     elif isinstance(value, str):
         normalized = value.strip().replace("Z", "+00:00")

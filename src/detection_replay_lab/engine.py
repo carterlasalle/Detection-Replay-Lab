@@ -59,5 +59,7 @@ def _logsource_matches(rule: Rule, event: Event) -> bool:
         (rule.logsource.category, event.get("event.category")),
         (rule.logsource.service, event.get("service.name") or event.get("event.provider")),
     )
-    return all(expected is None or (actual is not None and str(actual).casefold() == expected) for expected, actual in checks)
-
+    return all(
+        expected is None or (actual is not None and str(actual).casefold() == expected)
+        for expected, actual in checks
+    )

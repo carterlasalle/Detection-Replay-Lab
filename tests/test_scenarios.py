@@ -31,9 +31,17 @@ class ScenarioTests(unittest.TestCase):
     def test_failed_gate_is_explained(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "events.ndjson").write_text('{"id":"e1","timestamp":1,"label":"malicious"}\n', encoding="utf-8")
-            (root / "rule.yml").write_text("id: no-match\ntitle: No match\ndetection:\n  selection:\n    event.action: absent\n", encoding="utf-8")
-            (root / "scenario.yml").write_text("events: [events.ndjson]\nrules: [rule.yml]\ngates:\n  minimum_recall: 1.0\n", encoding="utf-8")
+            (root / "events.ndjson").write_text(
+                '{"id":"e1","timestamp":1,"label":"malicious"}\n', encoding="utf-8"
+            )
+            (root / "rule.yml").write_text(
+                "id: no-match\ntitle: No match\ndetection:\n  selection:\n    event.action: absent\n",
+                encoding="utf-8",
+            )
+            (root / "scenario.yml").write_text(
+                "events: [events.ndjson]\nrules: [rule.yml]\ngates:\n  minimum_recall: 1.0\n",
+                encoding="utf-8",
+            )
             run = run_scenario(load_scenario(root))
         self.assertFalse(run.passed)
         self.assertIn("recall", run.failures[0])

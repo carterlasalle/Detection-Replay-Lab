@@ -1,0 +1,31 @@
+name: Detection proposal
+description: Propose a rule and falsifiable scenario pack
+title: "detection: "
+labels: [enhancement, detection]
+body:
+  - type: input
+    id: technique
+    attributes:
+      label: ATT&CK technique
+      placeholder: T1059.001
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observable behavior and required telemetry
+    validations:
+      required: true
+  - type: textarea
+    id: negatives
+    attributes:
+      label: Benign controls and known false positives
+    validations:
+      required: true
+  - type: textarea
+    id: gates
+    attributes:
+      label: Proposed precision, recall, F1, and alert-count gates
+    validations:
+      required: true
+

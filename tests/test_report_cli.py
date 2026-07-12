@@ -61,7 +61,18 @@ class CliTests(unittest.TestCase):
             with contextlib.redirect_stdout(output):
                 self.assertEqual(main(["validate", "--scenarios", str(root)]), 0)
                 self.assertEqual(main(["test", str(root)]), 0)
-                self.assertEqual(main(["replay", "--events", str(root / "events.ndjson"), "--rules", str(root / "rule.yml")]), 0)
+                self.assertEqual(
+                    main(
+                        [
+                            "replay",
+                            "--events",
+                            str(root / "events.ndjson"),
+                            "--rules",
+                            str(root / "rule.yml"),
+                        ]
+                    ),
+                    0,
+                )
             self.assertIn("PASS", output.getvalue())
             self.assertIn("Encoded PowerShell", output.getvalue())
 
@@ -70,8 +81,27 @@ class CliTests(unittest.TestCase):
             root = Path(directory) / "scenario"
             kit(root)
             with contextlib.redirect_stdout(io.StringIO()):
-                code = main(["replay", "--events", str(root / "events.ndjson"), "--rules", str(root / "rule.yml"), "--fail-on-alert"])
-                explain = main(["explain", "--event", str(root / "events.ndjson"), "--rules", str(root / "rule.yml"), "--rule-id", "starter-encoded-powershell"])
+                code = main(
+                    [
+                        "replay",
+                        "--events",
+                        str(root / "events.ndjson"),
+                        "--rules",
+                        str(root / "rule.yml"),
+                        "--fail-on-alert",
+                    ]
+                )
+                explain = main(
+                    [
+                        "explain",
+                        "--event",
+                        str(root / "events.ndjson"),
+                        "--rules",
+                        str(root / "rule.yml"),
+                        "--rule-id",
+                        "starter-encoded-powershell",
+                    ]
+                )
             self.assertEqual(code, 1)
             self.assertEqual(explain, 2)  # explain requires exactly one event
 

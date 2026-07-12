@@ -14,7 +14,9 @@ class EventLoaderTests(unittest.TestCase):
     def test_loads_json_ndjson_csv_and_gzip(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "one.json").write_text(json.dumps({"id": "one", "timestamp": 1}), encoding="utf-8")
+            (root / "one.json").write_text(
+                json.dumps({"id": "one", "timestamp": 1}), encoding="utf-8"
+            )
             (root / "two.ndjson").write_text('{"id":"two","timestamp":2}\n', encoding="utf-8")
             (root / "three.csv").write_text("id,timestamp\nthree,3\n", encoding="utf-8")
             with gzip.open(root / "four.ndjson.gz", "wt", encoding="utf-8") as stream:
@@ -31,4 +33,3 @@ class EventLoaderTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

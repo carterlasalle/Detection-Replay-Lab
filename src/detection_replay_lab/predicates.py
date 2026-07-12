@@ -15,7 +15,9 @@ def match_selection(name: str, selection: Any, event: Event) -> SelectionTrace:
     if isinstance(selection, list):
         traces = [match_selection(name, item, event) for item in selection]
         matched = any(trace.matched for trace in traces)
-        return SelectionTrace(name, matched, tuple(check for trace in traces for check in trace.checks))
+        return SelectionTrace(
+            name, matched, tuple(check for trace in traces for check in trace.checks)
+        )
     if not isinstance(selection, dict):
         raise ValidationError(f"selection {name!r} must be an object or list of objects")
     checks: list[str] = []
@@ -26,7 +28,9 @@ def match_selection(name: str, selection: Any, event: Event) -> SelectionTrace:
         field, modifiers = _parse_field(expression)
         actual = event.get(field)
         outcome = _match_value(actual, expected, modifiers)
-        checks.append(f"{field}{'|' if modifiers else ''}{'|'.join(modifiers)}: {'match' if outcome else 'miss'}")
+        checks.append(
+            f"{field}{'|' if modifiers else ''}{'|'.join(modifiers)}: {'match' if outcome else 'miss'}"
+        )
         matched = matched and outcome
     return SelectionTrace(name, matched, tuple(checks))
 
@@ -39,7 +43,20 @@ def _parse_field(expression: str) -> tuple[str, tuple[str, ...]]:
     parts = expression.split("|")
     field = parts[0]
     modifiers = tuple(part.casefold() for part in parts[1:])
-    allowed = {"contains", "startswith", "endswith", "re", "cidr", "exists", "gt", "gte", "lt", "lte", "all", "windash"}
+    allowed = {
+        "contains",
+        "startswith",
+        "endswith",
+        "re",
+        "cidr",
+        "exists",
+        "gt",
+        "gte",
+        "lt",
+        "lte",
+        "all",
+        "windash",
+    }
     unknown = set(modifiers) - allowed
     if unknown:
         raise ValidationError(f"unknown modifier(s) on {field}: {', '.join(sorted(unknown))}")
@@ -51,8 +68,15 @@ def _match_value(actual: Any, expected: Any, modifiers: tuple[str, ...]) -> bool
         desired = bool(expected)
         return (actual is not None) == desired
     expected_values = expected if isinstance(expected, list) else [expected]
-    matcher = lambda value: _match_one(actual, value, modifiers)
-    return all(matcher(value) for value in expected_values) if "all" in modifiers else any(matcher(value) for value in expected_values)
+
+    def matcher(value: Any) -> bool:
+        return _match_one(actual, value, modifiers)
+
+    return (
+        all(matcher(value) for value in expected_values)
+        if "all" in modifiers
+        else any(matcher(value) for value in expected_values)
+    )
 
 
 def _match_one(actual: Any, expected: Any, modifiers: tuple[str, ...]) -> bool:
@@ -91,7 +115,9 @@ def _match_one(actual: Any, expected: Any, modifiers: tuple[str, ...]) -> bool:
             raise ValidationError(f"invalid detection regex {expected_text!r}: {exc}") from exc
     if "cidr" in modifiers:
         try:
-            return ipaddress.ip_address(actual_text) in ipaddress.ip_network(expected_text, strict=False)
+            return ipaddress.ip_address(actual_text) in ipaddress.ip_network(
+                expected_text, strict=False
+            )
         except ValueError:
             return False
     if any(char in expected_text for char in "*?"):
@@ -153,7 +179,9 @@ class _ConditionParser:
         if lowered in {"1", "all"} and self._peek("of"):
             self.position += 1
             pattern = self._consume()
-            selected = [value for name, value in self.matches.items() if fnmatch.fnmatch(name, pattern)]
+            selected = [
+                value for name, value in self.matches.items() if fnmatch.fnmatch(name, pattern)
+            ]
             if not selected:
                 raise ValidationError(f"condition pattern {pattern!r} matched no selections")
             return any(selected) if lowered == "1" else all(selected)
