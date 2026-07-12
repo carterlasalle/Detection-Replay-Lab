@@ -1,0 +1,6 @@
+{"id":"ps-1","timestamp":"2026-01-02T00:00:00Z","drl.product":"windows","category":"process_creation","process_name":"powershell.exe","command_line":"powershell.exe -NoP -enc SYNTHETIC","parent_process_name":"explorer.exe","label":"malicious","expected_rules":["drl-windows-encoded-powershell"]}
+{"id":"ps-benign","timestamp":"2026-01-02T00:00:10Z","drl.product":"windows","category":"process_creation","process_name":"powershell.exe","command_line":"powershell.exe -File inventory.ps1","parent_process_name":"sccmexec.exe","label":"benign"}
+{"id":"ct-1","timestamp":"2026-01-02T00:01:00Z","drl.product":"aws","eventSource":"cloudtrail.amazonaws.com","eventName":"DescribeTrails","userIdentity":{"userName":"compromised-admin"},"label":"malicious","expected_rules":["drl-aws-cloudtrail-discovery-disable"]}
+{"id":"ct-2","timestamp":"2026-01-02T00:02:00Z","drl.product":"aws","eventSource":"cloudtrail.amazonaws.com","eventName":"StopLogging","userIdentity":{"userName":"compromised-admin"},"label":"malicious","expected_rules":["drl-aws-cloudtrail-discovery-disable"]}
+{"id":"ct-benign","timestamp":"2026-01-02T00:03:00Z","drl.product":"aws","eventSource":"cloudtrail.amazonaws.com","eventName":"GetTrailStatus","userIdentity":{"userName":"audit-role"},"label":"benign"}
+

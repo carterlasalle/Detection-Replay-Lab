@@ -1,0 +1,16 @@
+id: credential-access
+title: Credential access detection pack
+description: Exercises password guessing and suspicious LSASS access with adjacent benign activity.
+events: [events.ndjson]
+rules:
+  - ../../rules/repeated_auth_failures.yml
+  - ../../rules/lsass_process_access.yml
+techniques:
+  - attack.t1110
+  - attack.t1003.001
+gates:
+  minimum_precision: 1.0
+  minimum_recall: 1.0
+  minimum_f1: 1.0
+  expected_alerts: 2
+

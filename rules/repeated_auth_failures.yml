@@ -1,0 +1,22 @@
+id: drl-auth-repeated-failures
+title: Repeated Authentication Failures by User and Source
+status: stable
+description: Detects a burst of failed authentications sharing user and source address.
+author: Carter LaSalle
+date: 2026-07-12
+level: high
+tags:
+  - attack.credential_access
+  - attack.t1110
+detection:
+  selection:
+    event.action:
+      - user_login_failed
+      - authentication_failure
+  condition: selection
+correlation:
+  type: threshold
+  group_by: [user.name, source.ip]
+  timespan: 5m
+  count: 3
+

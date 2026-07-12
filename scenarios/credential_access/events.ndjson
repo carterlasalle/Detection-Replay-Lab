@@ -1,0 +1,7 @@
+{"id":"auth-1","timestamp":"2026-01-01T00:00:00Z","action":"user_login_failed","username":"eve","src_ip":"203.0.113.42","label":"malicious","expected_rules":["drl-auth-repeated-failures"]}
+{"id":"auth-2","timestamp":"2026-01-01T00:00:30Z","action":"user_login_failed","username":"eve","src_ip":"203.0.113.42","label":"malicious","expected_rules":["drl-auth-repeated-failures"]}
+{"id":"auth-3","timestamp":"2026-01-01T00:01:00Z","action":"user_login_failed","username":"eve","src_ip":"203.0.113.42","label":"malicious","expected_rules":["drl-auth-repeated-failures"]}
+{"id":"auth-benign","timestamp":"2026-01-01T00:01:10Z","action":"user_login_failed","username":"alice","src_ip":"198.51.100.10","label":"benign"}
+{"id":"lsass-1","timestamp":"2026-01-01T00:02:00Z","drl.product":"windows","category":"process_access","process_name":"rundll32.exe","target.process.name":"C:\\Windows\\System32\\lsass.exe","process.access_mask":"0x1010","label":"malicious","expected_rules":["drl-windows-lsass-access"]}
+{"id":"lsass-benign","timestamp":"2026-01-01T00:02:10Z","drl.product":"windows","category":"process_access","process_name":"MsMpEng.exe","target.process.name":"C:\\Windows\\System32\\lsass.exe","process.access_mask":"0x1010","label":"benign"}
+

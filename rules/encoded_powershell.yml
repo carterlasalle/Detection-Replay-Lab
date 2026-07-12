@@ -1,0 +1,31 @@
+id: drl-windows-encoded-powershell
+title: Encoded PowerShell Command
+status: stable
+description: Detects PowerShell using encoded command-line arguments with common benign automation filtered.
+author: Carter LaSalle
+date: 2026-07-12
+level: high
+logsource:
+  product: windows
+  category: process_creation
+tags:
+  - attack.execution
+  - attack.t1059.001
+falsepositives:
+  - Approved software deployment tooling using encoded commands
+detection:
+  selection_image:
+    process.name|endswith:
+      - powershell.exe
+      - pwsh.exe
+  selection_flag:
+    process.command_line|contains:
+      - " -enc "
+      - " -encodedcommand "
+      - " /enc "
+  filter_deployment:
+    process.parent.name|endswith:
+      - sccmexec.exe
+      - intunemanagementextension.exe
+  condition: selection_image and selection_flag and not filter_deployment
+

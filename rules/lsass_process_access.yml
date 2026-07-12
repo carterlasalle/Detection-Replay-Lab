@@ -1,0 +1,29 @@
+id: drl-windows-lsass-access
+title: Suspicious Access to LSASS
+status: stable
+description: Detects high-access process handles opened against LSASS outside known security tooling.
+author: Carter LaSalle
+date: 2026-07-12
+level: critical
+logsource:
+  product: windows
+  category: process_access
+tags:
+  - attack.credential_access
+  - attack.t1003.001
+falsepositives:
+  - Endpoint security products inspecting LSASS
+detection:
+  selection_target:
+    target.process.name|endswith: lsass.exe
+  selection_access:
+    process.access_mask|contains:
+      - "0x1010"
+      - "0x1fffff"
+      - "0x143a"
+  filter_security:
+    process.name|endswith:
+      - msmpeng.exe
+      - csfalconservice.exe
+  condition: selection_target and selection_access and not filter_security
+

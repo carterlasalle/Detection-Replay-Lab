@@ -1,0 +1,16 @@
+id: defense-evasion
+title: Execution and defense evasion pack
+description: Exercises encoded PowerShell and CloudTrail logging tamper correlation.
+events: [events.ndjson]
+rules:
+  - ../../rules/encoded_powershell.yml
+  - ../../rules/cloudtrail_disable_sequence.yml
+techniques:
+  - attack.t1059.001
+  - attack.t1562.008
+gates:
+  minimum_precision: 1.0
+  minimum_recall: 1.0
+  minimum_f1: 1.0
+  expected_alerts: 2
+

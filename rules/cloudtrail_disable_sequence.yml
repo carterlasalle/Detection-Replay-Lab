@@ -1,0 +1,29 @@
+id: drl-aws-cloudtrail-discovery-disable
+title: CloudTrail Discovery Followed by Disablement
+status: stable
+description: Correlates CloudTrail discovery with subsequent logging disablement by the same identity.
+author: Carter LaSalle
+date: 2026-07-12
+level: critical
+logsource:
+  product: aws
+  service: cloudtrail.amazonaws.com
+tags:
+  - attack.defense_evasion
+  - attack.t1562.008
+detection:
+  discovery:
+    event.action:
+      - DescribeTrails
+      - GetTrailStatus
+  disable:
+    event.action:
+      - StopLogging
+      - DeleteTrail
+  condition: 1 of *
+correlation:
+  type: sequence
+  group_by: [user.name]
+  timespan: 15m
+  ordered: [discovery, disable]
+
