@@ -1,0 +1,8 @@
+- id: drl-rule-validate
+  name: Validate Detection Replay Lab rules
+  description: Validate changed detection-rule YAML files
+  entry: drl validate --rules
+  language: python
+  files: (^|/)rules/.*\.ya?ml$
+  pass_filenames: true
+

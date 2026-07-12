@@ -1,0 +1,32 @@
+name: Detection Replay Lab
+description: Validate detection rules and enforce deterministic scenario quality gates
+author: Carter LaSalle
+branding:
+  icon: activity
+  color: red
+inputs:
+  scenarios:
+    description: Space-separated scenario directories or manifests
+    required: true
+  report:
+    description: JUnit report output path
+    required: false
+    default: drl-junit.xml
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@v6
+      with:
+        python-version: "3.13"
+    - name: Install Detection Replay Lab
+      shell: bash
+      run: uv tool install "$GITHUB_ACTION_PATH"
+    - name: Execute scenario gates
+      shell: bash
+      env:
+        DRL_SCENARIOS: ${{ inputs.scenarios }}
+        DRL_REPORT: ${{ inputs.report }}
+      run: |
+        read -r -a scenarios <<< "$DRL_SCENARIOS"
+        drl test "${scenarios[@]}" --format junit --output "$DRL_REPORT"
+
