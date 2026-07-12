@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Literal
@@ -157,6 +158,8 @@ def parse_timestamp(value: Any) -> datetime:
         parsed = datetime.fromtimestamp(float(value), tz=UTC)
     elif isinstance(value, str):
         normalized = value.strip().replace("Z", "+00:00")
+        if re.fullmatch(r"-?\d+(?:\.\d+)?", normalized):
+            return datetime.fromtimestamp(float(normalized), tz=UTC)
         try:
             parsed = datetime.fromisoformat(normalized)
         except ValueError as exc:
@@ -174,4 +177,3 @@ def stable_id(*parts: str) -> str:
         digest.update(part.encode("utf-8", errors="surrogatepass"))
         digest.update(b"\0")
     return digest.hexdigest()
-
