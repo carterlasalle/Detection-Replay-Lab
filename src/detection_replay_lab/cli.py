@@ -90,7 +90,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _rules(args)
         return _init(Path(args.path))
     except (OSError, ValidationError, ValueError) as exc:
-        print(f"drl: error: {exc}", file=sys.stderr)
+        _console_print(f"drl: error: {exc}", stream=sys.stderr)
         return 2
 
 
@@ -130,7 +130,7 @@ def _validate(args: argparse.Namespace) -> int:
     for scenario in scenarios:
         load_rules(list(scenario.rule_paths))
         load_events(list(scenario.event_paths))
-    print(f"✓ Validated {rule_count} direct rule(s) and {len(scenarios)} scenario(s)")
+    _console_print(f"✓ Validated {rule_count} direct rule(s) and {len(scenarios)} scenario(s)")
     return 0
 
 
@@ -150,17 +150,19 @@ def _explain(args: argparse.Namespace) -> int:
         raise ValidationError(f"unknown rule id {args.rule_id!r}")
     event = load_event(args.event)
     trace = DetectionEngine(rules).explain(rule, event)
-    print(json.dumps({"event_id": event.id, "trace": _trace_dict(trace)}, indent=2, sort_keys=True))
+    _console_print(
+        json.dumps({"event_id": event.id, "trace": _trace_dict(trace)}, indent=2, sort_keys=True)
+    )
     return 0 if trace.matched else 1
 
 
 def _rules(args: argparse.Namespace) -> int:
     rules = load_rules(args.paths)
     if args.format == "json":
-        print(json.dumps([_rule_dict(rule) for rule in rules], indent=2, sort_keys=True))
+        _console_print(json.dumps([_rule_dict(rule) for rule in rules], indent=2, sort_keys=True))
     else:
         for rule in rules:
-            print(f"{rule.level.upper():13} {rule.id:36} {rule.title}")
+            _console_print(f"{rule.level.upper():13} {rule.id:36} {rule.title}")
     return 0
 
 
@@ -171,7 +173,7 @@ def _init(root: Path) -> int:
     (root / "scenario.yml").write_text(_STARTER_SCENARIO, encoding="utf-8")
     (root / "events.ndjson").write_text(_STARTER_EVENTS, encoding="utf-8")
     (root / "rule.yml").write_text(_STARTER_RULE, encoding="utf-8")
-    print(f"Created {root} (run: drl test {root})")
+    _console_print(f"Created {root} (run: drl test {root})")
     return 0
 
 
@@ -179,7 +181,22 @@ def _write(content: str, path: str | None) -> None:
     if path:
         Path(path).write_text(content + ("" if content.endswith("\n") else "\n"), encoding="utf-8")
     else:
-        print(content)
+        _console_print(content)
+
+
+def _console_print(content: str, *, stream: Any | None = None) -> None:
+    """Print without crashing when a redirected console uses a legacy codec.
+
+    Windows runners and some terminal hosts expose a non-UTF-8 stream even
+    though reports may contain Unicode status markers or user-controlled rule
+    metadata. Unsupported characters are escaped deterministically; UTF-8
+    terminals retain the original output.
+    """
+
+    target = stream if stream is not None else sys.stdout
+    encoding = getattr(target, "encoding", None) or "utf-8"
+    safe = content.encode(encoding, errors="backslashreplace").decode(encoding)
+    print(safe, file=target)
 
 
 def _trace_dict(trace: EvaluationTrace) -> dict[str, Any]:
