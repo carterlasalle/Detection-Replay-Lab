@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from detection_replay_lab.cli import main
+from detection_replay_lab.cli import _console_print, main
 from detection_replay_lab.evaluate import evaluate
 from detection_replay_lab.events import load_events
 from detection_replay_lab.replay import ReplayRunner
@@ -53,6 +53,14 @@ class ReportTests(unittest.TestCase):
 
 
 class CliTests(unittest.TestCase):
+    def test_console_output_escapes_unsupported_unicode(self) -> None:
+        raw = io.BytesIO()
+        stream = io.TextIOWrapper(raw, encoding="cp1252", newline="\n")
+        _console_print("✓ validated — café", stream=stream)
+        stream.flush()
+        self.assertEqual(raw.getvalue().decode("cp1252"), "\\u2713 validated — café\n")
+        stream.detach()
+
     def test_starter_kit_validates_tests_and_replays(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "scenario"
