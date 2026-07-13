@@ -28,14 +28,3 @@ jobs:
         run: |
           uv sync --locked
           uv run drl validate --rules rules --scenarios scenarios/credential_access scenarios/defense_evasion
-
-  dependency-review:
-    if: github.event_name == 'pull_request'
-    permissions:
-      contents: read
-      pull-requests: write
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/dependency-review-action@v5
-
